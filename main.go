@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,15 +13,17 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+//go:embed default.json
+var camoData []byte
+
 const listHeight = 16
 
 var (
-    titleStyle        = lipgloss.NewStyle().MarginLeft(2)
-    itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-    selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
-    paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-    helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
-    quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
+	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
+	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
+	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
+	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
+	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 )
 
 type item string
@@ -33,147 +36,204 @@ func (d itemDelegate) Height() int                             { return 1 }
 func (d itemDelegate) Spacing() int                            { return 0 }
 func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
 func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-    i, ok := listItem.(item)
-    if !ok {
-        return
-    }
+	i, ok := listItem.(item)
+	if !ok {
+		return
+	}
 
-    str := fmt.Sprintf("%d. %s", index+1, i)
+	str := fmt.Sprintf("%d. %s", index+1, i)
 
-    fn := itemStyle.Render
-    if index == m.Index() {
-        fn = func(s ...string) string {
-            return selectedItemStyle.Render("> " + strings.Join(s, " "))
-        }
-    }
+	fn := itemStyle.Render
+	if index == m.Index() {
+		fn = func(s ...string) string {
+			return selectedItemStyle.Render("> " + strings.Join(s, " "))
+		}
+	}
 
-    fmt.Fprint(w, fn(str))
+	fmt.Fprint(w, fn(str))
 }
 
-// CamoItem represents the structure of each item in the JSON file
 type CamoItem struct {
-    Name     string `json:"name"`
-    Category string `json:"category"`
+	Name     string `json:"name"`
+	Category string `json:"category"`
+	Checked  bool   `json:"checked"`
 }
 
 type model struct {
-    list     list.Model
-    choice   string
-    quitting bool
-    depth    int                    // Track current depth in nested list
-    history  []list.Model           // Store previous list states for back navigation
-    nested   map[string][]list.Item // Define nested items for each main item
+	list      list.Model
+	nested    map[string][]list.Item
+	camoItems []CamoItem
 }
 
 func (m model) Init() tea.Cmd {
-    return nil
+	return nil
 }
 
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-    switch msg := msg.(type) {
-    case tea.WindowSizeMsg:
-        m.list.SetWidth(msg.Width)
-        return m, nil
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch keypress := msg.String(); keypress {
+		case "enter":
+			// Handle selection based on the current list type
+			selected, ok := m.list.SelectedItem().(item)
+			if ok {
+				selection := string(selected)
 
-    case tea.KeyMsg:
-        switch keypress := msg.String(); keypress {
-        case "q", "ctrl+c":
-            m.quitting = true
-            return m, tea.Quit
+				// If we're in the main categories list
+				if items, exists := m.nested[selection]; exists {
+					// Switch to the nested list of items for this category
+					m.list.SetItems(items)
+					m.list.Title = selection
+				} else {
+					// Otherwise, toggle the checked state for a specific item
+					itemName := strings.TrimSuffix(selection, " ✅")
 
-        case "enter", "right":
-            i, ok := m.list.SelectedItem().(item)
-            if ok {
-                m.choice = string(i)
+					for index, camo := range m.camoItems {
+						if camo.Name == itemName {
+							// Toggle the checked state
+							m.camoItems[index].Checked = !camo.Checked
+							break
+						}
+					}
 
-                // Check if there are nested items for the selected choice
-                if nestedItems, exists := m.nested[m.choice]; exists {
-                    // Save current list state to history for back navigation
-                    m.history = append(m.history, m.list)
-                    m.list = list.New(nestedItems, itemDelegate{}, m.list.Width(), listHeight)
-                    m.depth++
-                    m.list.Title = m.choice // Update title to show current selection context
-                    return m, nil
-                } else {
-                    // No nested items, so quit
-                    return m, tea.Quit
-                }
-            }
+					// Save the updated camo items to the writable JSON file
+					if err := saveCamoItems("camos.json", m.camoItems); err != nil {
+						fmt.Println("Error saving JSON:", err)
+					}
 
-        case "backspace", "left":
-            // Go back to the previous list level
-            if m.depth > 0 {
-                m.list = m.history[m.depth-1]
-                m.history = m.history[:m.depth-1]
-                m.depth--
-            }
-            return m, nil
-        }
-    }
+					// Refresh the nested map and update the current category's list
+					m.nested = groupItemsByCategory(m.camoItems)
 
-    var cmd tea.Cmd
-    m.list, cmd = m.list.Update(msg)
-    return m, cmd
+					// Refresh the current category's list (if we're in a nested list)
+					if items, exists := m.nested[m.list.Title]; exists {
+						m.list.SetItems(items)
+					}
+				}
+			}
+			return m, nil
+
+		case "backspace":
+			// Go back to the main categories list
+			categories := []list.Item{}
+			for category := range m.nested {
+				categories = append(categories, item(category))
+			}
+
+			m.list.SetItems(categories)
+			m.list.Title = "BO6 Camo Tracker"
+			return m, nil
+
+		case "q", "ctrl+c":
+			return m, tea.Quit
+		}
+	}
+
+	var cmd tea.Cmd
+	m.list, cmd = m.list.Update(msg)
+	return m, cmd
 }
+
+
+
 
 func (m model) View() string {
-    // if m.choice != "" && m.depth == 0 {
-    //     return quitTextStyle.Render(fmt.Sprintf("Selected: %s", m.choice))
-    // }
-    if m.quitting {
-        return quitTextStyle.Render("Exiting App... Goodbye!")
-    }
-    return "\n" + m.list.View()
+	return "\n" + m.list.View()
 }
 
-// loadNestedItems loads data from camos.json and organizes it into a nested items map
-func loadNestedItems(filePath string) (map[string][]list.Item, error) {
-    file, err := os.Open(filePath)
-    if err != nil {
-        return nil, err
-    }
-    defer file.Close()
+func loadEmbeddedCamoItems() []CamoItem {
+	var camoItems []CamoItem
+	if err := json.Unmarshal(camoData, &camoItems); err != nil {
+		fmt.Println("Error loading embedded JSON:", err)
+		os.Exit(1)
+	}
+	return camoItems
+}
+func loadWritableCamoItems(filePath string) ([]CamoItem, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
 
-    var camoItems []CamoItem
-    if err := json.NewDecoder(file).Decode(&camoItems); err != nil {
-        return nil, err
-    }
+	var camoItems []CamoItem
+	if err := json.NewDecoder(file).Decode(&camoItems); err != nil {
+		return nil, err
+	}
+	return camoItems, nil
+}
 
-    nestedItems := make(map[string][]list.Item)
-    for _, camo := range camoItems {
-        nestedItems[camo.Category] = append(nestedItems[camo.Category], item(camo.Name))
-    }
 
-    return nestedItems, nil
+
+func saveCamoItems(filePath string, camoItems []CamoItem) error {
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(camoItems)
+}
+
+func groupItemsByCategory(camoItems []CamoItem) map[string][]list.Item {
+	nested := make(map[string][]list.Item)
+	for _, camo := range camoItems {
+		displayName := camo.Name
+		if camo.Checked {
+			displayName += " ✅"
+		}
+		nested[camo.Category] = append(nested[camo.Category], item(displayName))
+	}
+	return nested
 }
 
 func main() {
-    // Load nested items from JSON
-    nestedItems, err := loadNestedItems("camos.json")
-    if err != nil {
-        fmt.Println("Error loading camos.json:", err)
-        os.Exit(1)
-    }
+	// Path to the writable JSON file
+	writablePath := "camos.json"
 
-    categories := []list.Item{}
-    for category := range nestedItems {
-        categories = append(categories, item(category))
-    }
+	// Check if the writable JSON file exists
+	if _, err := os.Stat(writablePath); os.IsNotExist(err) {
+		// If it doesn't exist, create it with the embedded data
+		if err := saveCamoItems(writablePath, loadEmbeddedCamoItems()); err != nil {
+			fmt.Println("Error saving writable JSON:", err)
+			os.Exit(1)
+		}
+	}
 
-    const defaultWidth = 20
+	// Load camo items from the writable JSON file
+	camoItems, err := loadWritableCamoItems(writablePath)
+	if err != nil {
+		fmt.Println("Error loading writable JSON:", err)
+		os.Exit(1)
+	}
 
-    l := list.New(categories, itemDelegate{}, defaultWidth, listHeight)
-    l.Title = "BO6 Camo Tracker"
-    l.SetShowStatusBar(false)
-    l.SetFilteringEnabled(false)
-    l.Styles.Title = titleStyle
-    l.Styles.PaginationStyle = paginationStyle
-    l.Styles.HelpStyle = helpStyle
+	// Group items by category
+	nestedItems := groupItemsByCategory(camoItems)
 
-    m := model{list: l, nested: nestedItems}
+	// Prepare category list
+	categories := []list.Item{}
+	for category := range nestedItems {
+		categories = append(categories, item(category))
+	}
 
-    if _, err := tea.NewProgram(&m).Run(); err != nil {
-        fmt.Println("Error:", err)
-        os.Exit(1)
-    }
+	// Initialize list model
+	const defaultWidth = 20
+	l := list.New(categories, itemDelegate{}, defaultWidth, listHeight)
+	l.Title = "BO6 Camo Tracker"
+	l.SetShowStatusBar(false)
+	l.SetFilteringEnabled(false)
+	l.Styles.Title = titleStyle
+	l.Styles.PaginationStyle = paginationStyle
+	l.Styles.HelpStyle = helpStyle
+
+	// Initialize program model
+	m := model{list: l, nested: nestedItems, camoItems: camoItems}
+
+	// Run the program
+	if _, err := tea.NewProgram(&m).Run(); err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(1)
+	}
 }
+

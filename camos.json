@@ -1,43 +1,167 @@
 [
-  { "name": "XM4", "category": "Assault Rifles" },
-  { "name": "AK74", "category": "Assault Rifles" },
-  { "name": "AMES 85", "category": "Assault Rifles" },
-  { "name": "GPR 91", "category": "Assault Rifles" },
-  { "name": "Model L", "category": "Assault Rifles" },
-  { "name": "Goblin MK 2", "category": "Assault Rifles" },
-  { "name": "AS VAL", "category": "Assault Rifles" },
-
-  { "name": "C9", "category": "SMGs" },
-  { "name": "KSV", "category": "SMGs" },
-  { "name": "Tanto .22", "category": "SMGs" },
-  { "name": "PP-919", "category": "SMGs" },
-  { "name": "Jackal PDW", "category": "SMGs" },
-  { "name": "KOMPAKT 92", "category": "SMGs" },
-
-  { "name": "Marine SP", "category": "Shotguns" },
-  { "name": "ASG-89", "category": "Shotguns" },
-
-  { "name": "PU-21", "category": "LMGs" },
-  { "name": "XMG", "category": "LMGs" },
-  { "name": "GPMG-7", "category": "LMGs" },
-
-  { "name": "SWAT 5.56", "category": "Marksman Rifles" },
-  { "name": "Tsarkov 7.62", "category": "Marksman Rifles" },
-  { "name": "AEK-973", "category": "Marksman Rifles" },
-  { "name": "DM-10", "category": "Marksman Rifles" },
-
-  { "name": "LW3A1 Frostline", "category": "Snipers" },
-  { "name": "SVD", "category": "Snipers" },
-  { "name": "LR 7.62", "category": "Snipers" },
-
-  { "name": "9mm PM", "category": "Pistols" },
-  { "name": "Grekhova", "category": "Pistols" },
-  { "name": "GS45", "category": "Pistols" },
-  { "name": "Stryder .22", "category": "Pistols" },
-
-  { "name": "CIGMA 2B", "category": "Launchers" },
-  { "name": "HE-1", "category": "Launchers" },
-
-  { "name": "Combat Knife", "category": "Melee" },
-  { "name": "Baseball Bat", "category": "Melee" }
+  {
+    "name": "XM4",
+    "category": "Assault Rifles",
+    "checked": true
+  },
+  {
+    "name": "AK74",
+    "category": "Assault Rifles",
+    "checked": true
+  },
+  {
+    "name": "AMES 85",
+    "category": "Assault Rifles",
+    "checked": false
+  },
+  {
+    "name": "GPR 91",
+    "category": "Assault Rifles",
+    "checked": false
+  },
+  {
+    "name": "Model L",
+    "category": "Assault Rifles",
+    "checked": false
+  },
+  {
+    "name": "Goblin MK 2",
+    "category": "Assault Rifles",
+    "checked": false
+  },
+  {
+    "name": "AS VAL",
+    "category": "Assault Rifles",
+    "checked": false
+  },
+  {
+    "name": "C9",
+    "category": "SMGs",
+    "checked": true
+  },
+  {
+    "name": "KSV",
+    "category": "SMGs",
+    "checked": true
+  },
+  {
+    "name": "Tanto .22",
+    "category": "SMGs",
+    "checked": true
+  },
+  {
+    "name": "PP-919",
+    "category": "SMGs",
+    "checked": false
+  },
+  {
+    "name": "Jackal PDW",
+    "category": "SMGs",
+    "checked": false
+  },
+  {
+    "name": "KOMPAKT 92",
+    "category": "SMGs",
+    "checked": false
+  },
+  {
+    "name": "Marine SP",
+    "category": "Shotguns",
+    "checked": false
+  },
+  {
+    "name": "ASG-89",
+    "category": "Shotguns",
+    "checked": false
+  },
+  {
+    "name": "PU-21",
+    "category": "LMGs",
+    "checked": false
+  },
+  {
+    "name": "XMG",
+    "category": "LMGs",
+    "checked": false
+  },
+  {
+    "name": "GPMG-7",
+    "category": "LMGs",
+    "checked": false
+  },
+  {
+    "name": "SWAT 5.56",
+    "category": "Marksman Rifles",
+    "checked": true
+  },
+  {
+    "name": "Tsarkov 7.62",
+    "category": "Marksman Rifles",
+    "checked": false
+  },
+  {
+    "name": "AEK-973",
+    "category": "Marksman Rifles",
+    "checked": true
+  },
+  {
+    "name": "DM-10",
+    "category": "Marksman Rifles",
+    "checked": false
+  },
+  {
+    "name": "LW3A1 Frostline",
+    "category": "Snipers",
+    "checked": false
+  },
+  {
+    "name": "SVD",
+    "category": "Snipers",
+    "checked": false
+  },
+  {
+    "name": "LR 7.62",
+    "category": "Snipers",
+    "checked": false
+  },
+  {
+    "name": "9mm PM",
+    "category": "Pistols",
+    "checked": false
+  },
+  {
+    "name": "Grekhova",
+    "category": "Pistols",
+    "checked": false
+  },
+  {
+    "name": "GS45",
+    "category": "Pistols",
+    "checked": false
+  },
+  {
+    "name": "Stryder .22",
+    "category": "Pistols",
+    "checked": false
+  },
+  {
+    "name": "CIGMA 2B",
+    "category": "Launchers",
+    "checked": false
+  },
+  {
+    "name": "HE-1",
+    "category": "Launchers",
+    "checked": false
+  },
+  {
+    "name": "Combat Knife",
+    "category": "Melee",
+    "checked": true
+  },
+  {
+    "name": "Baseball Bat",
+    "category": "Melee",
+    "checked": true
+  }
 ]
