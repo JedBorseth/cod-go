@@ -138,6 +138,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	return "\n" + m.list.View()
+	
 }
 
 func loadEmbeddedCamoItems() []CamoItem {

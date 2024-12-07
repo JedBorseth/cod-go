@@ -92,7 +92,7 @@
   {
     "name": "SWAT 5.56",
     "category": "Marksman Rifles",
-    "checked": true
+    "checked": false
   },
   {
     "name": "Tsarkov 7.62",
@@ -102,7 +102,7 @@
   {
     "name": "AEK-973",
     "category": "Marksman Rifles",
-    "checked": true
+    "checked": false
   },
   {
     "name": "DM-10",
@@ -112,12 +112,12 @@
   {
     "name": "LW3A1 Frostline",
     "category": "Snipers",
-    "checked": false
+    "checked": true
   },
   {
     "name": "SVD",
     "category": "Snipers",
-    "checked": false
+    "checked": true
   },
   {
     "name": "LR 7.62",
